@@ -12,31 +12,27 @@ def parse_args():
     parser.add_argument("--beta2",
                         type=float,
                         default=0.999)
+    parser.add_argument("--lambda1",
+                        type=int,
+                        default=100)
     parser.add_argument("--batch_size",
                         type=int,
                         default=64)
     parser.add_argument("--max_epochs",
                         type=int,
-                        default=50)
+                        default=500)
     parser.add_argument("--cuda",
                         action="store_true")
-    parser.add_argument("--file_path",
+    parser.add_argument("--dataset_dir",
                         type=str,
-                        default="dataset/images.csv")
+                        default="dataset/")
 
     return parser.parse_args()
 
 
 def main(config):
     t = trainer.Trainer(config)
-    # t.fit()
-
-    t.load("model")
-
-    import numpy as np
-    z = np.random.randn(64, 128).astype(np.float32) * 2 - 1
-
-    t.generate("fake", z)
+    t.fit()
 
 
 if __name__ == "__main__":
