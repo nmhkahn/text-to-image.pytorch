@@ -25,7 +25,7 @@ class VQADataset(data.Dataset):
             self.train_data = pickle.load(_file, encoding="latin1")
             _file.close()
         else:
-            _file = open(os.path.join(dataset_dir, "test.pkl"), "rb")
+            _file = open(os.path.join(dataset_dir, "val.pkl"), "rb")
             self.test_data = pickle.load(_file, encoding="latin1")
             _file.close()
 
@@ -56,7 +56,9 @@ class VQADataset(data.Dataset):
             embed = self.test_data[index]["embedding"]
             mean_embed = torch.FloatTensor(np.mean(embed, axis=0))
 
-            return self.transform(im), mean_embed
+            caption = self.test_data[index]["caption"]
+
+            return self.transform(im), mean_embed, caption
 
     def __len__(self):
         if self.train:

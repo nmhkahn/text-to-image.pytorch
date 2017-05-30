@@ -1,6 +1,7 @@
 import os
 import glob
 import time
+import numpy as np
 import torch
 import torch.utils
 import torch.nn as nn
@@ -20,13 +21,13 @@ class Trainer():
         print(self.discriminator)
 
         self.bce_loss_fn = nn.BCELoss()
-        self.l1_loss_fn = nn.L1Loss()
+        self.l1_loss_fn = nn.SmoothL1Loss() # a.k.a huber loss
         self.opt_g = torch.optim.Adam(self.generator.parameters(),
             lr=config.lr, betas=(config.beta1, config.beta2))
         self.opt_d = torch.optim.Adam(self.discriminator.parameters(),
             lr=config.lr, betas=(config.beta1, config.beta2))
 
-        self.dataset = VQADataset(config.dataset_dir)
+        self.dataset = VQADataset(config.dataset_dir, train=config.is_train)
         self.data_loader = DataLoader(self.dataset,
                                       batch_size=config.batch_size,
                                       num_workers=4,
@@ -89,11 +90,15 @@ class Trainer():
                 fake_im = self.generator(noise, right_text)
                 D_fake  = self.discriminator(fake_im, right_text)
 
-                loss_gen = self.bce_loss_fn(D_fake, self.ones) + \
-                           self.l1_loss_fn(fake_im, real_im) * config.lambda1
+                loss_G_gan   = self.bce_loss_fn(D_fake, self.ones)
+                loss_G_image = self.l1_loss_fn(fake_im, real_im)
+
+                loss_gen = loss_G_gan + loss_G_image
                 loss_gen.backward()
                 self.opt_g.step()
                 self._reset_gradients()
+
+                print(loss_G_gan.data[0], loss_G_image.data[0])
 
                 t2 = time.time()
 
@@ -115,15 +120,38 @@ class Trainer():
             torch.save(self.discriminator.state_dict(),
                        "model/discriminator_{}.pth".format(epoch+1))
 
-    def generate(self, filename, noise):
-        # TODO check shapes
-        noise = Variable(torch.from_numpy(noise))
+    def sample(self, indices):
+        ims, embeds = [], []
+        
+        _file = open("sample/captions.txt", "w")
+        for idx in indices:
+            im, embed, caption = self.dataset[idx]
+            ims.append(im)
+            embeds.append(embed)
+            
+            _file.write("index: {}\n".format(idx))
+            for c in caption:
+                _file.write(c+"\n")
+            _file.write("\n")
+        _file.close()
+        
+        ims    = torch.stack(ims, 0)
+        embeds = torch.stack(embeds, 0)
+        noise  = Variable(torch.randn(len(indices), 100))
 
-        if self.config.cuda:
+        if self.config.cuda: 
             noise = noise.cuda()
+            embeds = Variable(embeds).cuda()
+        else:
+            embeds = Variable(embeds)
 
-        gen = self.generator(noise)
-        torchvision.utils.save_image(gen.data, "sample/{}.png".format(filename))
+        embeds = embeds.view(len(indices), -1)
+        fake_ims = self.generator(noise, embeds)
+        
+        torchvision.utils.save_image(ims, "sample/reals.png", 
+                                     nrow=3, normalize=True)
+        torchvision.utils.save_image(fake_ims.data, "sample/fakes.png", 
+                                     nrow=3, normalize=True)
 
     def load(self, directory):
         paths = glob.glob(os.path.join(directory, "*.pth"))
