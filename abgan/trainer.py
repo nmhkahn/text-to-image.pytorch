@@ -21,7 +21,6 @@ class Trainer():
         print(self.discriminator)
 
         self.bce_loss_fn = nn.BCELoss()
-        self.l1_loss_fn = nn.SmoothL1Loss() # a.k.a huber loss
         self.opt_g = torch.optim.Adam(self.generator.parameters(),
             lr=config.lr, betas=(config.beta1, config.beta2))
         self.opt_d = torch.optim.Adam(self.discriminator.parameters(),
@@ -40,7 +39,6 @@ class Trainer():
             self.generator     = self.generator.cuda()
             self.discriminator = self.discriminator.cuda()
             self.bce_loss_fn   = self.bce_loss_fn.cuda()
-            self.l1_loss_fn    = self.l1_loss_fn.cuda()
             self.ones          = self.ones.cuda()
             self.zeros         = self.zeros.cuda()
 
@@ -90,15 +88,10 @@ class Trainer():
                 fake_im = self.generator(noise, right_text)
                 D_fake  = self.discriminator(fake_im, right_text)
 
-                loss_G_gan   = self.bce_loss_fn(D_fake, self.ones)
-                loss_G_image = self.l1_loss_fn(fake_im, real_im)
-
-                loss_gen = loss_G_gan + loss_G_image
+                loss_gen   = self.bce_loss_fn(D_fake, self.ones)
                 loss_gen.backward()
                 self.opt_g.step()
                 self._reset_gradients()
-
-                print(loss_G_gan.data[0], loss_G_image.data[0])
 
                 t2 = time.time()
 

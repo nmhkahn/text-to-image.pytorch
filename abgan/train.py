@@ -37,4 +37,5 @@ def main(config):
 
 if __name__ == "__main__":
     config = parse_args()
+    config.is_train = True
     main(config)
