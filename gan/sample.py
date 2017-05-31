@@ -36,14 +36,17 @@ def parse_args():
 
     
 def main(config):
+    """
     _file = open(os.path.join(config.dataset_dir, "val.pkl"), "rb")
     data = pickle.load(_file, encoding="latin1")
     _file.close()
     
+    random_index = np.random.randint(len(data), size=9)
+    """
+    random_index = np.arange(16)
+
     t = trainer.Trainer(config)
     t.load(config.model_dir)
-
-    random_index = np.random.randint(len(data), size=9)
     t.sample(random_index)
         
 

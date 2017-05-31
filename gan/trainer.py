@@ -142,9 +142,9 @@ class Trainer():
         fake_ims = self.generator(noise, embeds)
         
         torchvision.utils.save_image(ims, "sample/reals.png", 
-                                     nrow=3, normalize=True)
+                                     normalize=True)
         torchvision.utils.save_image(fake_ims.data, "sample/fakes.png", 
-                                     nrow=3, normalize=True)
+                                     normalize=True)
 
     def load(self, directory):
         paths = glob.glob(os.path.join(directory, "*.pth"))

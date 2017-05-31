@@ -25,7 +25,7 @@ class VQADataset(data.Dataset):
             self.train_data = pickle.load(_file, encoding="latin1")
             _file.close()
         else:
-            _file = open(os.path.join(dataset_dir, "val.pkl"), "rb")
+            _file = open(os.path.join(dataset_dir, "test.pkl"), "rb")
             self.test_data = pickle.load(_file, encoding="latin1")
             _file.close()
 
