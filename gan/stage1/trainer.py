@@ -9,8 +9,8 @@ import torchvision
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from ../dataset import VQADataset
-from model import Generator, Discriminator
+from gan.dataset import VQADataset
+from gan.stage1.model import Generator, Discriminator
 
 class Trainer():
     def __init__(self, config):

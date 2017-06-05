@@ -20,6 +20,8 @@ def parse_args():
     parser.add_argument("--max_epochs",
                         type=int,
                         default=500)
+    parser.add_argument("action",
+                        choices=("stage1", "stage2"))
     parser.add_argument("--cuda",
                         action="store_true")
     parser.add_argument("--dataset_dir",
@@ -30,8 +32,6 @@ def parse_args():
 
 
 def main(config):
-    import stage1.trainer as trainer
-    
     t = trainer.Trainer(config)
     t.fit()
 
@@ -39,4 +39,10 @@ def main(config):
 if __name__ == "__main__":
     config = parse_args()
     config.is_train = True
+
+    if config.action == "stage1":
+        import stage1.trainer as trainer
+    elif config.action == "stage2":
+        raise NotImplementedError
+
     main(config)

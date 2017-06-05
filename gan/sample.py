@@ -1,15 +1,15 @@
 import os
-import pickle
+import glob
 import argparse
-import numpy as np
 import torch
 import torchvision
 from torch.autograd import Variable
-
 from dataset import VQADataset
 
 def parse_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("action",
+                        choices=("stage1", "stage2"))
     parser.add_argument("--cuda",
                         action="store_true")
     parser.add_argument("--dataset_dir",
@@ -24,25 +24,24 @@ def parse_args():
     return parser.parse_args()
 
 
-def sample(indices):
-    # TODO: temporary only load stage1 (add argparse)
-    from stage1.model import Generator
+def _load(generator, directory):
+    paths = glob.glob(os.path.join(directory, "*.pth"))
+    gen_path = [path for path in paths if "generator" in path][0]
+    generator.load_state_dict(torch.load(gen_path))
+    print("Load pretrained [{}, {}]".format(gen_path))
 
+
+def _sample(indices):
     generator = Generator()
+    _load(generator, config.model_dir)
     dataset = VQADataset(config.dataset_dir, train=config.is_train)
 
-    ims, embeds = [], []
-    _file = open("{}/captions.txt".format(config.sample_dir), "w")
+    ims, embeds, captions = [], [], []
     for idx in indices:
         im, embed, caption = dataset[idx]
         ims.append(im)
         embeds.append(embed)
-
-        _file.write("index: {}\n".format(idx))
-        for c in caption:
-            _file.write(c+"\n")
-        _file.write("\n")
-    _file.close()
+        captions.append(caption)
 
     ims    = torch.stack(ims, 0)
     embeds = torch.stack(embeds, 0)
@@ -64,13 +63,25 @@ def sample(indices):
                                  "{}/fake.png".format(config.sample_dir),
                                  normalize=True)
 
+    _file = open("{}/captions.txt".format(config.sample_dir), "w")
+    for i, caption in enumerate(captions):
+        _file.write("index: {}\n".format(indices[i]))
+        for c in caption:
+            _file.write(c+"\n")
+        _file.write("\n")
+    _file.close()
+
 
 def main(config):
-    random_index = np.arange(16, 32)
-    sample(random_index)
-
+    random_index = list(range(16, 32))
+    _sample(random_index)
 
 if __name__ == "__main__":
     config = parse_args()
-    config.is_train = False
+
+    if config.action == "stage1":
+        from stage1.model import Generator
+    elif config.action == "stage2":
+        raise NotImplementedError
+
     main(config)
