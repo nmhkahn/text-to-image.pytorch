@@ -9,7 +9,7 @@ import torchvision
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
-from dataset import VQADataset
+from ../dataset import VQADataset
 from model import Generator, Discriminator
 
 class Trainer():
@@ -66,7 +66,7 @@ class Trainer():
                 noise = Variable(torch.randn(config.batch_size, 100))
                 noise = noise.cuda() if config.cuda else noise
                 fake_im = self.generator(noise, right_text)
-                
+
                 # Train the discriminator
                 D_real  = self.discriminator(real_im, right_text)
                 D_wrong = self.discriminator(real_im, wrong_text)
@@ -84,7 +84,7 @@ class Trainer():
                 # Train the generator
                 noise = Variable(torch.randn(config.batch_size, 100))
                 noise = noise.cuda() if config.cuda else noise
-                
+
                 fake_im = self.generator(noise, right_text)
                 D_fake  = self.discriminator(fake_im, right_text)
 
@@ -112,39 +112,6 @@ class Trainer():
                        "model/generator_{}.pth".format(epoch+1))
             torch.save(self.discriminator.state_dict(),
                        "model/discriminator_{}.pth".format(epoch+1))
-
-    def sample(self, indices):
-        ims, embeds = [], []
-        
-        _file = open("sample/captions.txt", "w")
-        for idx in indices:
-            im, embed, caption = self.dataset[idx]
-            ims.append(im)
-            embeds.append(embed)
-            
-            _file.write("index: {}\n".format(idx))
-            for c in caption:
-                _file.write(c+"\n")
-            _file.write("\n")
-        _file.close()
-        
-        ims    = torch.stack(ims, 0)
-        embeds = torch.stack(embeds, 0)
-        noise  = Variable(torch.randn(len(indices), 100))
-
-        if self.config.cuda: 
-            noise = noise.cuda()
-            embeds = Variable(embeds).cuda()
-        else:
-            embeds = Variable(embeds)
-
-        embeds = embeds.view(len(indices), -1)
-        fake_ims = self.generator(noise, embeds)
-        
-        torchvision.utils.save_image(ims, "sample/reals.png", 
-                                     normalize=True)
-        torchvision.utils.save_image(fake_ims.data, "sample/fakes.png", 
-                                     normalize=True)
 
     def load(self, directory):
         paths = glob.glob(os.path.join(directory, "*.pth"))

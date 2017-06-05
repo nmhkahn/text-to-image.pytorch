@@ -1,5 +1,4 @@
 import argparse
-import trainer
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -31,6 +30,8 @@ def parse_args():
 
 
 def main(config):
+    import stage1.trainer as trainer
+    
     t = trainer.Trainer(config)
     t.fit()
 
