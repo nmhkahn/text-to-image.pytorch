@@ -106,12 +106,14 @@ class Trainer():
                                   loss_disc.data[0], loss_gen.data[0], eta))
 
             torchvision.utils.save_image(fake_im.data,
-                "sample/fake_{}_{}.png".format(epoch+1, step+1), normalize=True)
+                "sample/fake_{}.png".format(epoch+1), normalize=True)
 
             torch.save(self.generator.state_dict(),
-                       "model/generator_{}.pth".format(epoch+1))
+                       "{}/stage2_generator_{}.pth"
+                       .format(config.model_dir, epoch+1))
             torch.save(self.discriminator.state_dict(),
-                       "model/discriminator_{}.pth".format(epoch+1))
+                       "{}/stage2_discriminator_{}.pth"
+                       .format(config.model_dir, epoch+1))
 
     def load(self, directory):
         paths = glob.glob(os.path.join(directory, "*.pth"))

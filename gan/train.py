@@ -30,12 +30,17 @@ def parse_args():
     parser.add_argument("--dataset_dir",
                         type=str,
                         default="dataset/")
+    parser.add_argument("--model_dir",
+                        type=str,
+                        default="model/")
 
     return parser.parse_args()
 
 
 def main(config):
     t = trainer.Trainer(config)
+    if config.action == "stage2":
+        t.load_stage1(os.path.join(config.model_dir, "stage1"))
     t.fit()
 
 
@@ -46,6 +51,6 @@ if __name__ == "__main__":
     if config.action == "stage1":
         import stage1.trainer as trainer
     elif config.action == "stage2":
-        raise NotImplementedError
+        import stage2.trainer as trainer
 
     main(config)

@@ -10,15 +10,17 @@ class ResidualBlock(nn.Module):
 
         self.block = nn.Sequential(
             conv2d(channel_in, channel_out, 3, 1, 1),
-            conv2d(channel_out, channel_out, 3, 1, 1)
+            conv2d(channel_out, channel_out, 3, 1, 1, activation=None)
         )
+
+        self.lrelu = nn.LeakyReLU(0.2)
 
     def forward(self, x):
         residual = x
         out = self.block(x)
 
         out += residual
-        out = self.relu(out)
+        out = self.lrelu(out)
         return out
 
 

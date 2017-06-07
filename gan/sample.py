@@ -30,13 +30,13 @@ def _load(generator, directory):
     paths = glob.glob(os.path.join(directory, "*.pth"))
     gen_path = [path for path in paths if "generator" in path][0]
     generator.load_state_dict(torch.load(gen_path))
-    print("Load pretrained [{}, {}]".format(gen_path))
+    print("Load pretrained [{}]".format(gen_path))
 
 
 def _sample(indices):
     generator = Generator()
     _load(generator, config.model_dir)
-    dataset = VQADataset(config.dataset_dir, train=config.is_train)
+    dataset = VQADataset(config.dataset_dir, train=False)
 
     ims, embeds, captions = [], [], []
     for idx in indices:
