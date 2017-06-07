@@ -19,7 +19,6 @@ class Trainer():
 
         self.stage1_generator = Stage1Generator()
         self.stage2_generator = Stage2Generator()
-        self.stage1_discriminator = Stage1Discriminator()
         self.stage2_discriminator = Stage2Discriminator()
 
         print(self.stage2_generator)
@@ -45,7 +44,6 @@ class Trainer():
         if config.cuda:
             self.stage1_generator     = self.stage1_generator.cuda()
             self.stage2_generator     = self.stage2_generator.cuda()
-            self.stage1_discriminator = self.stage1_discriminator.cuda()
             self.stage2_discriminator = self.stage2_discriminator.cuda()
             self.bce_loss_fn = self.bce_loss_fn.cuda()
             self.ones        = self.ones.cuda()
@@ -89,13 +87,7 @@ class Trainer():
                 self._reset_gradients()
 
                 # train the generator
-                noise = Variable(torch.randn(config.batch_size, 100))
-                noise = noise.cuda() if config.cuda else noise
-
-                fake_im_stage1 = self.stage1_generator(noise, right_text)
-                fake_im_stage2 = self.stage2_generator(fake_im_stage1, right_text)
                 D_fake  = self.stage2_discriminator(fake_im_stage2, right_text)
-
                 loss_gen = self.bce_loss_fn(D_fake, self.ones)
                 loss_gen.backward()
                 self.opt_g.step()
@@ -114,9 +106,9 @@ class Trainer():
                                   loss_disc.data[0], loss_gen.data[0], eta))
 
             torchvision.utils.save_image(fake_im_stage2.data,
-                "sample/fake_{}.png".format(epoch+1), normalize=True)
+                "sample/fake_stage2_{}.png".format(epoch+1), normalize=True)
             torchvision.utils.save_image(fake_im_stage1.data,
-                "sample/fake1_{}.png".format(epoch+1), normalize=True)
+                "sample/fake_stage1_{}.png".format(epoch+1), normalize=True)
 
             torch.save(self.stage2_generator.state_dict(),
                        "{}/stage2_generator_{}.pth"
@@ -128,12 +120,9 @@ class Trainer():
     def load_stage1(self, directory):
         paths = glob.glob(os.path.join(directory, "*.pth"))
         gen_path  = [path for path in paths if "generator" in path][0]
-        disc_path = [path for path in paths if "discriminator" in path][0]
-
         self.stage1_generator.load_state_dict(torch.load(gen_path))
-        self.stage1_discriminator.load_state_dict(torch.load(disc_path))
 
-        print("Load pretrained stage1 [{}, {}]".format(gen_path, disc_path))
+        print("Load pretrained stage1 [{}]".format(gen_path))
 
     def _reset_gradients(self):
         self.stage2_generator.zero_grad()
