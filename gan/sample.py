@@ -19,7 +19,7 @@ def parse_args():
                         default="dataset/")
     parser.add_argument("--model_dir",
                         type=str,
-                        default="model/stage1")
+                        default="model/")
     parser.add_argument("--sample_dir",
                         type=str,
                         default="sample/stage1")
@@ -33,10 +33,17 @@ def _load(generator, directory):
     print("Load pretrained [{}]".format(gen_path))
 
 
-def _sample(indices):
-    generator = Generator()
-    _load(generator, config.model_dir)
-    dataset = VQADataset(config.dataset_dir, train=False)
+def _sample(indices, config):
+    dataset = VQADataset(config.dataset_dir, output_shape=[256, 256], train=False)
+    
+    if config.action == "stage1":
+        stage1_generator = Generator()
+        _load(stage1_generator, os.path.join(config.model_dir, "stage1"))
+    else:
+        stage1_generator = Stage1Generator()
+        stage2_generator = Stage2Generator()
+        _load(stage1_generator, os.path.join(config.model_dir, "stage1"))
+        _load(stage2_generator, os.path.join(config.model_dir, "stage2"))
 
     ims, embeds, captions = [], [], []
     for idx in indices:
@@ -54,17 +61,22 @@ def _sample(indices):
         embeds = Variable(embeds).cuda()
     else:
         embeds = Variable(embeds)
-
     embeds = embeds.view(len(indices), -1)
-    fake_ims = generator(noise, embeds)
-
+    
+    fake_ims_stage1 = stage1_generator(noise, embeds)
     torchvision.utils.save_image(ims,
                                  "{}/real.png".format(config.sample_dir),
                                  normalize=True)
-    torchvision.utils.save_image(fake_ims.data,
-                                 "{}/fake.png".format(config.sample_dir),
+    torchvision.utils.save_image(fake_ims_stage1.data,
+                                 "{}/fake_stage1.png".format(config.sample_dir),
                                  normalize=True)
 
+    if config.action == "stage2":
+        fake_ims_stage2 = stage2_generator(fake_ims_stage1, embeds)
+        torchvision.utils.save_image(fake_ims_stage2.data,
+                                     "{}/fake_stage2.png".format(config.sample_dir),
+                                     normalize=True)
+        
     _file = open("{}/captions.txt".format(config.sample_dir), "w")
     for i, caption in enumerate(captions):
         _file.write("index: {}\n".format(indices[i]))
@@ -72,11 +84,12 @@ def _sample(indices):
             _file.write(c+"\n")
         _file.write("\n")
     _file.close()
+    
 
 
 def main(config):
     random_index = list(range(16, 32))
-    _sample(random_index)
+    _sample(random_index, config)
 
 if __name__ == "__main__":
     config = parse_args()
@@ -84,6 +97,6 @@ if __name__ == "__main__":
     if config.action == "stage1":
         from stage1.model import Generator
     elif config.action == "stage2":
-        raise NotImplementedError
+        from stage2.model import Stage1Generator, Stage2Generator
 
     main(config)
