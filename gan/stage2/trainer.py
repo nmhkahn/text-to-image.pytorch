@@ -31,7 +31,7 @@ class Trainer():
             lr=config.lr, betas=(config.beta1, config.beta2))
 
         self.dataset = VQADataset(config.dataset_dir,
-                                  output_shape=[256, 256],
+                                  output_shape=[128, 128],
                                   train=config.is_train)
         self.data_loader = DataLoader(self.dataset,
                                       batch_size=config.batch_size,

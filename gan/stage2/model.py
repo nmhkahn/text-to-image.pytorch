@@ -40,21 +40,18 @@ class Stage2Generator(nn.Module):
         )
 
         self.net_encoder = nn.Sequential(
-            conv2d(3, 128, 3, 1, 1),
+            conv2d(3, 128, 4, 2, 1),
             conv2d(128, 256, 4, 2, 1),
-            conv2d(256, 512, 4, 2, 1),
+            conv2d(256, 512, 3, 1, 1),
         )
 
         self.net_joint = nn.Sequential(
             conv2d(512+256, 512, 3, 1, 1),
             ResidualBlock(512, 512),
             ResidualBlock(512, 512),
-            ResidualBlock(512, 512),
-            ResidualBlock(512, 512),
             nn_conv2d(512, 256, 3, 1, 1),
             nn_conv2d(256, 128, 3, 1, 1),
             nn_conv2d(128, 64, 3, 1, 1),
-            nn_conv2d(64, 64, 3, 1, 1),
             conv2d(64, 64, 3, 1, 1),
             conv2d(64, 3, 3, 1, 1, activation=nn.Tanh, normalizer=None)
         )
@@ -82,12 +79,11 @@ class Stage2Discriminator(nn.Module):
         )
 
         self.net_image = nn.Sequential(
-            conv2d(3, 64, 4, 2, 1, normalizer=None), # 128
-            conv2d(64, 128, 4, 2, 1), # 64
-            conv2d(128, 256, 4, 2, 1), # 32
-            conv2d(256, 512, 4, 2, 1), # 16
-            conv2d(512, 1024, 4, 2, 1), # 8
-            conv2d(1024, 1024, 4, 2, 1) # 4
+            conv2d(3, 64, 4, 2, 1, normalizer=None), # 64
+            conv2d(64, 128, 4, 2, 1), # 32
+            conv2d(128, 256, 4, 2, 1), # 16
+            conv2d(256, 512, 4, 2, 1), # 8
+            conv2d(512, 1024, 4, 2, 1), # 4
         )
 
         self.net_joint = nn.Sequential(
